@@ -76,6 +76,10 @@ rootfs-armhf: rootfs-docker
 rootfs-arm64: rootfs-docker
 	docker run -v $(CWD)/make_os/build:/build -it $(IMAGE_NAME)_os /build/make_rootfs.sh arm64
 
+.PHONY: debug
+debug: rootfs-docker
+	docker run -v $(CWD)/output_template/fpga:/work/fpga -v $(CWD)/dlk/hw/intel/de10_nano/linux_kernel:/work/linux_kernel -v $(CWD)/make_os:/work/make_os -it $(IMAGE_NAME)_os bash
+
 .PHONY: clean
 clean:
 	# Clean created files
