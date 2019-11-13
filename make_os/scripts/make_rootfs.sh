@@ -16,10 +16,13 @@ else
 	exit 1
 fi
 
-OUTPUT_FNAME=rootfs_${DEBOOTSTRAP_ARCH}.tgz
+BUILD_DIR=/work/build
+SCRIPTS_DIR=/work/scripts
+LINUX_KERNEL_DIR=/work/linux_kernel
+DRIVER_DIR=/work/driver
 
-BUILD_DIR=/build
-ROOTFS_DIR=${BUILD_DIR}/rootfs
+ROOTFS_DIR=${BUILD_DIR}/rootfs_${DEBOOTSTRAP_ARCH}
+ROOTFS_TGZ=${ROOTFS_DIR}.tgz
 
 # Chcek if the $ROOTFS_DIR exists or not
 if [ -d "${ROOTFS_DIR}" ]; then
@@ -27,19 +30,22 @@ if [ -d "${ROOTFS_DIR}" ]; then
 	exit 1
 fi
 
-# Check if $ROOTFS_DIR/$OUTPUT_NAME exists or not
-if [ -e "${BUILD_DIR}/${OUTPUT_FNAME}" ]; then
-	echo "Error: ${BUILD_DIR}/${OUTPUT_FNAME} on docker environment already exists"
+# Check if $ROOTFS_TGZ exists or not
+if [ -e "${ROOTFS_TGZ}" ]; then
+	echo "Error: ${ROOTFS_TGZ} on docker environment already exists"
 	exit 1
 fi
 
 # Make rootfs
 debootstrap --arch=${DEBOOTSTRAP_ARCH} --keyring=/usr/share/keyrings/ubuntu-archive-keyring.gpg --verbose --foreign bionic ${ROOTFS_DIR}
 cp /usr/bin/qemu-${QEMU_ARCH}-static ${ROOTFS_DIR}/usr/bin/
-cp ${BUILD_DIR}/setting_after_chroot.sh ${ROOTFS_DIR}
+cp ${SCRIPTS_DIR}/setting_after_chroot.sh ${ROOTFS_DIR}
 chroot ${ROOTFS_DIR} /bin/bash /setting_after_chroot.sh
 
 # Here is after chroot
 rm ${ROOTFS_DIR}/setting_after_chroot.sh
-tar cvzf ${BUILD_DIR}/${OUTPUT_FNAME} -C ${BUILD_DIR} rootfs --remove-file
-chmod a=rw ${BUILD_DIR}/${OUTPUT_FNAME}
+mkdir -p ${ROOTFS_DIR}/lib/modules/4.5.0/kernel/drivers/misc
+tar xvzf ${LINUX_KERNEL_DIR}/kernel_modules.tar.gz -C ${ROOTFS_DIR}/lib/modules/4.5.0/kernel
+cp ${DRIVER_DIR}/udmabuf.ko ${ROOTFS_DIR}/lib/modules/4.5.0/kernel/drivers/misc
+tar cvzf ${ROOTFS_TGZ} -C `dirname ${ROOTFS_DIR}` `basename ${ROOTFS_DIR}` --remove-file
+chmod a=rw ${ROOTFS_TGZ}
