@@ -11,9 +11,18 @@ ROOTFS_TGZ=${ROOTFS_DIR}.tgz
 ######
 ### This is main part
 ######
-wget -i ${LINUX_KERNEL_DIR}/sources.txt
+wget -i ${LINUX_KERNEL_DIR}/sources.txt -P ${BUILD_DIR}
+cd ${BUILD_DIR}
+unzip socfpga-4.5.zip
+cd ${BUILD_DIR}/linux-socfpga-socfpga-4.5
+cp ${LINUX_KERNEL_DIR}/config ./.config
+ln -s /usr/bin/arm-linux-gnueabihf-gcc-7 /usr/local/bin/arm-linux-gnueabihf-gcc
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-
+make # If use -j option, it'll be faster
 
-
+mkdir ${BUILD_DIR}/modules
+make modules_install INSTALL_MOD_PATH=${BUILD_DIR}/modules
 
 # Tar part is necessary later. It should be holded.
 #rm ${ROOTFS_DIR}/setting_after_chroot.sh
