@@ -78,7 +78,7 @@ rootfs-arm64: rootfs-docker
 
 .PHONY: de10nano-boot
 de10nano-boot: rootfs-docker
-	docker run -v $(CWD)/output_template/fpga:/work/fpga -v $(CWD)/dlk/hw/intel/de10_nano/linux_kernel:/work/linux_kernel -v $(CWD)/make_os/scripts:/work/scripts -v $(CWD)/make_os/build:/work/build -v $(CWD)/dlk/hw/intel/de10_nano/dma/terasic_ubuntu_arm32:/work/driver -it $(IMAGE_NAME)_os bash
+	docker run -v $(CWD)/output_template/fpga:/work/fpga -v $(CWD)/dlk/hw/intel/de10_nano/linux_kernel:/work/linux_kernel -v $(CWD)/make_os/scripts:/work/scripts -v $(CWD)/make_os/build:/work/build -v $(CWD)/dlk/hw/intel/de10_nano/dma/terasic_ubuntu_arm32:/work/driver --privileged -it $(IMAGE_NAME)_os bash
 
 .PHONY: de10nano
 de10nano: rootfs-armhf de10nano-boot

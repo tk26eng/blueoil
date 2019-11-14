@@ -44,8 +44,10 @@ chroot ${ROOTFS_DIR} /bin/bash /setting_after_chroot.sh
 
 # Here is after chroot
 rm ${ROOTFS_DIR}/setting_after_chroot.sh
-mkdir -p ${ROOTFS_DIR}/lib/modules/4.5.0/kernel/drivers/misc
-tar xvzf ${LINUX_KERNEL_DIR}/kernel_modules.tar.gz -C ${ROOTFS_DIR}/lib/modules/4.5.0/kernel
+
+mkdir -p ${ROOTFS_DIR}/lib/modules
+tar xvzf ${LINUX_KERNEL_DIR}/kernel_modules.tar.gz -C ${ROOTFS_DIR}/lib/modules
 cp ${DRIVER_DIR}/udmabuf.ko ${ROOTFS_DIR}/lib/modules/4.5.0/kernel/drivers/misc
+
 tar cvzf ${ROOTFS_TGZ} -C `dirname ${ROOTFS_DIR}` `basename ${ROOTFS_DIR}` --remove-file
 chmod a=rw ${ROOTFS_TGZ}
