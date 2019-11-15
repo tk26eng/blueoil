@@ -1,6 +1,7 @@
 #!/bin/bash
 
-IMG_NAME=./micro_sd.img
+BUILD_DIR=/work/build
+IMG_NAME=${BUILD_DIR}/micro_sd.img
 
 dd if=/dev/zero of=${IMG_NAME} bs=1MB count=7600 # 7600*1000*1000 Byte (95% of 8GB). 1MB means 1000*1000 Bytes
 

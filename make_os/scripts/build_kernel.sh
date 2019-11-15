@@ -25,8 +25,8 @@ ln -s /usr/bin/arm-linux-gnueabihf-gcc-7 /usr/local/bin/arm-linux-gnueabihf-gcc
 export ARCH=arm
 export CROSS_COMPILE=arm-linux-gnueabihf-
 make -j 32 # If we use -j option, it'll be faster than single core
-mv ${LINUX_DIR}/arch/arm/boot/zImage ${BUILD_DIR}
-make modules_install INSTALL_MOD_PATH=${BUILD_DIR}
+#mv ${LINUX_DIR}/arch/arm/boot/zImage ${BUILD_DIR}
+#make modules_install INSTALL_MOD_PATH=${BUILD_DIR}
 
 # Tar part is necessary later. It should be holded.
 #rm ${ROOTFS_DIR}/setting_after_chroot.sh
