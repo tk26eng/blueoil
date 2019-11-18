@@ -11,12 +11,14 @@ DRIVER_DIR=/work/driver
 LINUX_DIR=${BUILD_DIR}/linux
 LINUX_TGZ=${LINUX_DIR}.tgz
 
+UDMABUF_DIR=${BUILD_DIR}/udmabuf-2.1.2
+
 ######
 ### This is main part
 ######
 cd ${BUILD_DIR} # Just in case, we move to the directory 
 wget -i ${LINUX_KERNEL_DIR}/sources.txt -P ${BUILD_DIR}
-unzip socfpga-4.5.zip -d ${BUILD_DIR}
+unzip ${BUILD_DIR}/socfpga-4.5.zip -d ${BUILD_DIR}
 mv ${BUILD_DIR}/linux-socfpga-socfpga-4.5 ${LINUX_DIR}
 cp ${LINUX_KERNEL_DIR}/config ${LINUX_DIR}/.config
 
@@ -26,7 +28,22 @@ export ARCH=arm
 export CROSS_COMPILE=arm-linux-gnueabihf-
 make -j 32 # If we use -j option, it'll be faster than single core
 #mv ${LINUX_DIR}/arch/arm/boot/zImage ${BUILD_DIR}
-#make modules_install INSTALL_MOD_PATH=${BUILD_DIR}
+make modules_install INSTALL_MOD_PATH=${BUILD_DIR}
+
+wget https://github.com/ikwzm/udmabuf/archive/v2.1.2.zip -P ${BUILD_DIR}
+unzip ${BUILD_DIR}/v2.1.2.zip -d ${BUILD_DIR}
+make -C ${LINUX_DIR} M=${UDMABUF_DIR} modules
+make -C ${LINUX_DIR} M=${UDMABUF_DIR} INSTALL_MOD_PATH=${BUILD_DIR} modules_install
+
+
+
+
+
+
+
+
+
+
 
 # Tar part is necessary later. It should be holded.
 #rm ${ROOTFS_DIR}/setting_after_chroot.sh
