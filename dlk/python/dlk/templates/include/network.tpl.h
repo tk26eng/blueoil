@@ -59,6 +59,8 @@ private:
 
     QUANTIZED_PACKED *device_input_buf = 0;
     BIN_CONV_OUTPUT *device_output_buf = 0;
+    uint8_t *device_kernel_buf = 0;
+    uint8_t *device_thresholds_buf = 0;
 
     const T_INT input_rank = {{ graph_input.rank }};
     const T_INT input_shape[{{ graph_input.rank }}] = { {{ graph_input.view.shape_as_cpp }} };
@@ -71,6 +73,8 @@ private:
 
     DMA_Buffer dma_input_buffer;
     DMA_Buffer dma_output_buffer;
+    DMA_Buffer dma_kernel_buffer;
+    DMA_Buffer dma_thresholds_buffer;
 
 #if defined RUN_ON_FPGA
   {% set offset = namespace(o=0) -%}

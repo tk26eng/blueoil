@@ -165,6 +165,8 @@ Network::~Network()
 #else
   delete [] device_input_buf;
   delete [] device_output_buf;
+  delete [] device_kernel_buf;
+  delete [] device_thresholds_buf;
 #endif
 }
 
@@ -183,9 +185,9 @@ bool Network::init()
         max_device_input_elems,
         sizeof(QUANTIZED_PACKED),
         {% if config.cache %}
-          true, 0
+          true, 0, true
         {% else %}
-          false, INPUT_ADDR
+          false, INPUT_ADDR, false
         {% endif %}
     )
   )
@@ -203,9 +205,9 @@ bool Network::init()
         max_device_output_elems,
         sizeof(BIN_CONV_OUTPUT),
         {% if config.cache %}
-          true, 0
+          true, 0, true
         {% else %}
-          false, OUTPUT_ADDR
+          false, OUTPUT_ADDR, false
         {% endif %}
     )
   )
@@ -213,12 +215,56 @@ bool Network::init()
     return false;
   }
 
-  device_input_buf = (QUANTIZED_PACKED*) dma_input_buffer.buffer();
-  device_output_buf = (BIN_CONV_OUTPUT*) dma_output_buffer.buffer();
+  if(
+    !dma_kernel_buffer.init(
+        {% if config.cache %}
+          "udmabuf2",
+        {% else %}
+          "mem",
+        {% endif %}
+        1,
+        total_kernel_size,
+        {% if config.cache %}
+          true, 0, false
+        {% else %}
+          false, KERNEL_ADDR, false
+        {% endif %}
+    )
+  )
+  {
+    return false;
+  }
+
+  if(
+    !dma_thresholds_buffer.init(
+        {% if config.cache %}
+          "udmabuf3",
+        {% else %}
+          "mem",
+        {% endif %}
+        1,
+        total_thresholds_size,
+        {% if config.cache %}
+          true, 0, false
+        {% else %}
+          false, THRESHOLD_ADDR, false
+        {% endif %}
+    )
+  )
+  {
+    return false;
+  }
+
+  device_input_buf = reinterpret_cast<QUANTIZED_PACKED*>(dma_input_buffer.buffer());
+  device_output_buf = reinterpret_cast<BIN_CONV_OUTPUT*>(dma_output_buffer.buffer());
+  device_kernel_buf = reinterpret_cast<uint8_t*>(dma_kernel_buffer.buffer());
+  device_thresholds_buf = reinterpret_cast<uint8_t*>(dma_thresholds_buffer.buffer());
 
 #else
   device_input_buf = new QUANTIZED_PACKED[max_device_input_elems]();
   device_output_buf = new BIN_CONV_OUTPUT[max_device_output_elems]();
+  device_kernel_buf = new uint8_t[total_kernel_size/sizeof(uint8_t)];
+  device_thresholds_buf = new uint8_t[total_thresholds_size/sizeof(uint8_t)];
 #endif
 
   {% for node in graph.non_variables -%}
@@ -241,19 +287,19 @@ bool Network::init()
   {{ '\n' -}}
 
 #if defined RUN_ON_FPGA
-  MappedMem kernel_mmap(KERNEL_ADDR, total_kernel_size);
-  auto kernel_buffer = reinterpret_cast<uint8_t*>(kernel_mmap.get());
+  ///MappedMem kernel_mmap(KERNEL_ADDR, total_kernel_size);
+  ///auto kernel_buffer = reinterpret_cast<uint8_t*>(kernel_mmap.get());
   {% for qconv in graph.convs(quantized_only=True) -%}
   {%    set kernel = qconv.input_nodes[1] -%}
-  std::memcpy(kernel_buffer + {{qconv.name}}_kernel_offset, {{kernel.name}}.data(), {{qconv.name}}_kernel_size);
+  std::memcpy(device_kernel_buf + {{qconv.name}}_kernel_offset, {{kernel.name}}.data(), {{qconv.name}}_kernel_size);
   {% endfor -%}
 
-  MappedMem thresholds_mmap(THRESHOLD_ADDR, total_thresholds_size);
-  auto thresholds_buffer = reinterpret_cast<uint8_t*>(thresholds_mmap.get());
+  ///MappedMem thresholds_mmap(THRESHOLD_ADDR, total_thresholds_size);
+  ///auto thresholds_buffer = reinterpret_cast<uint8_t*>(thresholds_mmap.get());
   {% for qconv in graph.convs(quantized_only=True) -%}
       {% if qconv.has_thresholds -%}
           {% set thresholds = qconv.thresholds -%}
-  std::memcpy(thresholds_buffer + {{qconv.name}}_thresholds_offset, const_cast<T_INT16*>({{qconv.name}}_thresholds), {{qconv.name}}_thresholds_size);
+  std::memcpy(device_thresholds_buf + {{qconv.name}}_thresholds_offset, const_cast<T_INT16*>({{qconv.name}}_thresholds), {{qconv.name}}_thresholds_size);
       {% endif -%}
   {% endfor -%}
 #endif // RUN_ON_FPGA
