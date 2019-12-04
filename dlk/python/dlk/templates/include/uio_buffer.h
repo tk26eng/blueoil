@@ -33,11 +33,11 @@ class UIO_Buffer
 
 public:
 
-  UIO_Buffer()
-    :
-    mm_buffer(nullptr),
-    mapped_size_in_bytes(0)
-  {}
+  ///UIO_Buffer()
+  ///  :
+  ///  mm_buffer(nullptr),
+  ///  mapped_size_in_bytes(0)
+  ///{}
 
 
   ~UIO_Buffer()
@@ -70,8 +70,11 @@ public:
   }
 
 
-  bool init(const std::string &device_name, uint32_t size_in_bytes)  
-  {
+  bool UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)  
+    :
+    mm_buffer(nullptr),
+    mapped_size_in_bytes(0) 
+{
     mapped_size_in_bytes = size_in_bytes
 
     if(mm_buffer != nullptr)
