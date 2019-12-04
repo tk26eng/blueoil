@@ -53,7 +53,7 @@ public:
   }
 
 
-  bool init(const std::string &device_name, uint32_t elements, uint32_t element_size, bool use_dma_cache, unsigned long physical_address)
+  bool init(const std::string &device_name, uint32_t elements, uint32_t element_size, bool use_dma_cache, unsigned long physical_address, udma_cache_enable)
   {
     if(mm_buffer != nullptr)
     {
@@ -99,7 +99,15 @@ public:
     // open device and map the memory
 
     int dev_fd;
-    dev_fd = open(device_file.c_str(), O_RDWR);
+    ///dev_fd = open(device_file.c_str(), O_RDWR);
+    if(!udma_cache_enable) // When cache is disabled
+    {
+      dev_fd = open(device_file.c_str(), O_RDWR | O_SYNC, 0);
+    }
+    else{ // When cache is enabled
+      dev_fd = open(device_file.c_str(), O_RDWR, 0);
+    }
+
     if(dev_fd < 0)
     {
       std::cout << strerror(errno) << std::endl;
