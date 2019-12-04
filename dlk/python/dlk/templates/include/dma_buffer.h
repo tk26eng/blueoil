@@ -53,7 +53,7 @@ public:
   }
 
 
-  bool init(const std::string &device_name, uint32_t elements, uint32_t element_size, bool use_dma_cache, unsigned long physical_address, udma_cache_enable)
+  bool init(const std::string &device_name, uint32_t elements, uint32_t element_size, bool use_dma_cache, unsigned long physical_address, bool udma_cache_enable)
   {
     if(mm_buffer != nullptr)
     {
