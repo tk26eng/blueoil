@@ -187,7 +187,7 @@ bool Network::init()
         {% if config.cache %}
           true, 0, true
         {% else %}
-          false, INPUT_ADDR, false
+          false, 0, false
         {% endif %}
     )
   )
@@ -207,7 +207,7 @@ bool Network::init()
         {% if config.cache %}
           true, 0, true
         {% else %}
-          false, OUTPUT_ADDR, false
+          false, 0, false
         {% endif %}
     )
   )
@@ -227,7 +227,7 @@ bool Network::init()
         {% if config.cache %}
           true, 0, false
         {% else %}
-          false, KERNEL_ADDR, false
+          false, 0, false
         {% endif %}
     )
   )
@@ -247,7 +247,7 @@ bool Network::init()
         {% if config.cache %}
           true, 0, false
         {% else %}
-          false, THRESHOLD_ADDR, false
+          false, 0, false
         {% endif %}
     )
   )
