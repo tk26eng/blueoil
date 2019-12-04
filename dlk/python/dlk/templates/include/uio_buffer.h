@@ -23,90 +23,83 @@ limitations under the License.
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <string>
 #include <map>
 #include <vector>
 
-class DMA_Buffer
+class UIO_Buffer
 {
 
 public:
 
-  DMA_Buffer()
+  UIO_Buffer()
     :
     mm_buffer(nullptr),
     mapped_size_in_bytes(0)
   {}
 
 
-  ~DMA_Buffer()
+  ~UIO_Buffer()
   {
     if(mm_buffer != nullptr)
     {
       munmap((void *) mm_buffer, mapped_size_in_bytes);
-
-      if(using_dma_cache)
-      {
-        for(auto p : ctrl)
-          close(p.second);
-      }
     }
   }
 
 
-  bool init(const std::string &device_name, uint32_t elements, uint32_t element_size, bool use_dma_cache, unsigned long physical_address)
+  std::string get_attribute(std::string& path)
   {
+    ifstream in_file(path);
+    if(!in_file)
+    {
+      std::cout << "Error: Opening file was failed in get_attribute() of UIO_Buffer" << std::endl;
+      return std::string("");
+    }
+
+    std::string str_buf;
+    str_buf << in_file;
+    if(!in_file)
+    {
+      std::cout << "Error: Reading file was failed in get_attribute() of UIO_Buffer" << std::endl;
+      return std::string(""); 
+    }
+    
+    return str_buf;
+  }
+
+
+  bool init(const std::string &device_name, uint32_t size_in_bytes)  
+  {
+    mapped_size_in_bytes = size_in_bytes
+
     if(mm_buffer != nullptr)
     {
-      std::cout << "Error: DMA buffer " << device_name << " already initalized" << std::endl;
+      std::cout << "Error: UIO_Buffer " << device_name << " already initalized" << std::endl;
       return false;
     }
 
     const std::string device_file = "/dev/" + device_name;
-    using_dma_cache = use_dma_cache;
-
-    if(using_dma_cache)
-    {
-        const std::string sys_class_device_directory = "/sys/class/udmabuf/" + device_name;
-
-        // read only control attributes
-        for(auto name : ro_ctrl_names)
-        {
-            std::string fname = sys_class_device_directory + "/" + name;
-            ctrl[name] = open(fname.c_str(), O_RDONLY);
-        }
-
-        // read/write control attributes
-        for(auto name : rw_ctrl_names)
-        {
-            std::string fname = sys_class_device_directory + "/" + name;
-            ctrl[name] = open(fname.c_str(), O_WRONLY);
-        }
-
-        // constant value, read only one time
-        ssize_t bytes_read = read(ctrl["phys_addr"], attribute_buffer, 1024);
-        if(bytes_read == 0)
-          return false;
-
-        int match = sscanf(attribute_buffer, "%lx", &phys_addr);
-        if(match != 1)
-          return false;
-    }
-    else
-    {
-      phys_addr = physical_address;
-    }
 
     // open device and map the memory
 
-    int dev_fd;
-    dev_fd = open(device_file.c_str(), O_RDWR);
+    int dev_fd = open(device_file.c_str(), O_RDWR);
     if(dev_fd < 0)
     {
       std::cout << strerror(errno) << std::endl;
       return false;
     }
 
-    mapped_size_in_bytes = elements * element_size;
+    std::string str_phys_adr = get_attribute("/sys/class/uio/"+device_name+"/maps/map0/addr")
+    if(str_phys_adr == "")
+    {
+      std::cout << sterror(errno) << std::endl;
+      return false;
+    }
+
+    unsigned long physical_address << isstringstream(str_phys_adr)
+
     mm_buffer = mmap(
       nullptr,
       mapped_size_in_bytes,
@@ -128,58 +121,6 @@ public:
     return true;
   }
 
-  unsigned long physical_address()
-  {
-    return phys_addr;
-  }
-
-  bool sync_for_cpu()
-  {
-    if(using_dma_cache)
-    {
-      ssize_t written = write(ctrl["sync_for_cpu"], "1", 1);
-      return written == strlen("1");
-    }
-    else
-      return true;
-  }
-
-  bool sync_for_device()
-  {
-    if(using_dma_cache) {
-      ssize_t written = write(ctrl["sync_for_device"], "1", 1);
-      return written == strlen("1");
-    }
-    else
-      return true;
-  }
-
-  bool sync_size(unsigned long size)
-  {
-    if(using_dma_cache)
-    {
-      sprintf(attribute_buffer, "%lu", size);
-      ssize_t len = strlen(attribute_buffer);
-      ssize_t written = write(ctrl["sync_size"], attribute_buffer, len);
-      return written == len;
-    }
-
-    return true;
-  }
-
-  bool sync_offset(unsigned long offset)
-  {
-    if(using_dma_cache)
-    {
-      sprintf(attribute_buffer, "%lu", offset);
-      ssize_t len = strlen(attribute_buffer);
-      ssize_t written = write(ctrl["sync_offset"], attribute_buffer, len);
-      return written == len;
-    }
-
-    return true;
-  }
-
   volatile void* buffer()
   {
     return mm_buffer;
@@ -187,18 +128,10 @@ public:
 
 
 private:
-  DMA_Buffer(const DMA_Buffer &);
-  DMA_Buffer& operator=(const DMA_Buffer &);
+  UIO_Buffer(const UIO_Buffer &);
+  UIO_Buffer& operator=(const UIO_Buffer &);
 
 private:
   volatile void *mm_buffer;
   uint32_t mapped_size_in_bytes;
-  unsigned long phys_addr;
-  char attribute_buffer[1024];
-  bool using_dma_cache;
-
-  const std::vector<std::string> ro_ctrl_names = {"phys_addr", "size"};
-  const std::vector<std::string> rw_ctrl_names = {"sync_for_cpu", "sync_for_device", "sync_offset", "sync_size"};
-
-  std::map<std::string, int> ctrl;
 };
