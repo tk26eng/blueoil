@@ -15,7 +15,8 @@ limitations under the License.
 
 #pragma once
 #include "global.h"
-#include "memdriver.h"
+///#include "memdriver.h"
+#include "uio_buffer.h"
 #include "time_measurement.h"
 #include <cassert>
 #include <cstddef>
@@ -266,7 +267,7 @@ void RunTCA(unsigned long input_addr, unsigned long output_addr, unsigned long k
   unsigned use_threshold = (thresholds_addr != 0) ? 1 : 0;
 
   ///static MappedMem csr_mmap(HPS_TO_FPGA_LW_BASE, 0xFF);
-  static UIO_Buffer csr_mmap(str("uio1"), 0xFF); // This should be uio0 but now it's uio1
+  static UIO_Buffer csr_mmap(std::str("uio1"), 0xFF); // This should be uio0 but now it's uio1
   static volatile uint32_t* csr = reinterpret_cast<uint32_t*>(csr_mmap.get());
     auto tileWidth = 32u;
     auto tileHeight = 32u;

@@ -51,7 +51,7 @@ public:
 
   std::string get_attribute(std::string& path)
   {
-    ifstream in_file(path);
+    std::ifstream in_file(path);
     if(!in_file)
     {
       std::cout << "Error: Opening file was failed in get_attribute() of UIO_Buffer" << std::endl;
@@ -80,7 +80,7 @@ public:
     if(mm_buffer != nullptr)
     {
       std::cout << "Error: UIO_Buffer " << device_name << " already initalized" << std::endl;
-      return false;
+      //return false;
     }
 
     const std::string device_file = "/dev/" + device_name;
@@ -91,14 +91,12 @@ public:
     if(dev_fd < 0)
     {
       std::cout << strerror(errno) << std::endl;
-      return false;
     }
 
     std::string str_phys_adr = get_attribute("/sys/class/uio/"+device_name+"/maps/map0/addr")
     if(str_phys_adr == "")
     {
       std::cout << sterror(errno) << std::endl;
-      return false;
     }
 
     unsigned long physical_address << isstringstream(str_phys_adr)
@@ -116,7 +114,6 @@ public:
     if(mm_buffer == MAP_FAILED)
     {
       std::cout << "Error: " << strerror(errno) << std::endl;
-      return false;
     }
 
     memset((void *) mm_buffer, 0, mapped_size_in_bytes);

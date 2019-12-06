@@ -255,10 +255,10 @@ bool Network::init()
     return false;
   }
 
-  device_input_buf = reinterpret_cast<QUANTIZED_PACKED*>(dma_input_buffer.buffer());
-  device_output_buf = reinterpret_cast<BIN_CONV_OUTPUT*>(dma_output_buffer.buffer());
-  device_kernel_buf = reinterpret_cast<uint8_t*>(dma_kernel_buffer.buffer());
-  device_thresholds_buf = reinterpret_cast<uint8_t*>(dma_thresholds_buffer.buffer());
+  device_input_buf = (QUANTIZED_PACKED*) dma_input_buffer.buffer();
+  device_output_buf = (BIN_CONV_OUTPUT*) dma_output_buffer.buffer();
+  device_kernel_buf = (uint8_t*) dma_kernel_buffer.buffer();
+  device_thresholds_buf = (uint8_t*) dma_thresholds_buffer.buffer();
 
 #else
   device_input_buf = new QUANTIZED_PACKED[max_device_input_elems]();
