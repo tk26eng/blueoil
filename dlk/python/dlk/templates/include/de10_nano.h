@@ -267,8 +267,8 @@ void RunTCA(unsigned long input_addr, unsigned long output_addr, unsigned long k
   unsigned use_threshold = (thresholds_addr != 0) ? 1 : 0;
 
   ///static MappedMem csr_mmap(HPS_TO_FPGA_LW_BASE, 0xFF);
-  static UIO_Buffer csr_mmap(std::str("uio1"), 0xFF); // This should be uio0 but now it's uio1
-  static volatile uint32_t* csr = reinterpret_cast<uint32_t*>(csr_mmap.get());
+  static UIO_Buffer csr_mmap(std::string("uio1"), 0xFF); // This should be uio0 but now it's uio1
+  static volatile uint32_t* csr = reinterpret_cast<uint32_t*>(csr_mmap.buffer());
     auto tileWidth = 32u;
     auto tileHeight = 32u;
     auto p = calcParameters(in_h, in_w, in_c, tileWidth, tileHeight, out_c, k_h, k_w, input_addr, kernel_addr, thresholds_addr, output_addr, use_threshold == 1);

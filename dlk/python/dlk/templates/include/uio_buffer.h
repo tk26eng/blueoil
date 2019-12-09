@@ -32,13 +32,6 @@ class UIO_Buffer
 
 public:
 
-  ///UIO_Buffer()
-  ///  :
-  ///  mm_buffer(nullptr),
-  ///  mapped_size_in_bytes(0)
-  ///{}
-
-
   ~UIO_Buffer()
   {
     if(mm_buffer != nullptr)
@@ -68,7 +61,7 @@ public:
   }
 
 
-  bool UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)  
+UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)  
     :
     mm_buffer(nullptr),
     mapped_size_in_bytes(size_in_bytes) 
@@ -90,7 +83,8 @@ public:
       throw std::system_error(errno, std::generic_category());
     }
 
-    std::string str_phys_adr = get_attribute("/sys/class/uio/"+device_name+"/maps/map0/addr")
+    std::string attribute = std::string("/sys/class/uio/")+device_name+std::string("/maps/map0/addr");
+    std::string str_phys_adr = get_attribute(attribute);
     if(str_phys_adr == "")
     {
       std::cout << strerror(errno) << std::endl;
