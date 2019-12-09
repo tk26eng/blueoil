@@ -108,7 +108,7 @@ UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)
       throw std::system_error(errno, std::generic_category());
     }
 
-    memset((void *) mm_buffer, 0, mapped_size_in_bytes);
+    //memset((void *) mm_buffer, 0, mapped_size_in_bytes);
 
   }
 
