@@ -41,6 +41,13 @@ LIB_FPGA_SRC := $(wildcard $(SRC_DIR)/*.S) \
 LIB_FPGA_OBJ := $(patsubst %.S, %.o, $(LIB_FPGA_SRC))
 LIB_FPGA_OBJ := $(patsubst %.cpp, %.o, $(LIB_FPGA_OBJ))
 
+LIB_ARM64_FPGA_SRC := $(wildcard $(SRC_DIR)/*.S) \
+    $(SRC_DIR)/func/arm_neon/batch_normalization.cpp \
+    $(SRC_DIR)/func/impl/fpga/quantized_conv2d_kn2row.cpp \
+    $(SRC_DIR)/func/impl/arm_neon/pop_count.cpp
+LIB_ARM64_FPGA_OBJ := $(patsubst %.S, %.o, $(LIB_ARM64_FPGA_SRC))
+LIB_ARM64_FPGA_OBJ := $(patsubst %.cpp, %.o, $(LIB_ARM64_FPGA_OBJ))
+
 LIB_AARCH64_SRC := \
     $(SRC_DIR)/func/arm_neon/batch_normalization.cpp \
     $(SRC_DIR)/func/impl/arm_neon/quantized_conv2d_tiling.cpp \
@@ -79,6 +86,8 @@ TARGETS_ARM  := lm_arm
 
 TARGETS_FPGA := lm_fpga
 
+TARGETS_ARM64_FPGA := lm_arm64_fpga
+
 LIBS_X86     := lib_x86
 
 LIBS_X86_AVX := lib_x86_avx
@@ -88,6 +97,8 @@ LIBS_AARCH64 := lib_aarch64
 LIBS_ARM     := lib_arm
 
 LIBS_FPGA    := lib_fpga
+
+LIBS_ARM64_FPGA    := lib_arm64_fpga
 
 ARS_X86     := ar_x86
 
@@ -101,6 +112,8 @@ ARS_ARM     := ar_arm
 
 ARS_FPGA    := ar_fpga
 
+ARS_ARM64_FPGA    := ar_arm64_fpga
+
 
 RM       := rm -rf
 
@@ -113,6 +126,7 @@ clean:
 	-$(RM) $(LIB_X86_OBJ)
 	-$(RM) $(LIB_ARM_OBJ)
 	-$(RM) $(LIB_FPGA_OBJ)
+	-$(RM) $(LIB_ARM64_FPGA_OBJ)
 	-$(RM) $(LIB_AARCH64_OBJ)
 	-$(RM) $(OBJ)
 
@@ -136,6 +150,10 @@ lm_fpga:          CXX = arm-linux-gnueabihf-g++
 lm_fpga:          FLAGS += $(INCLUDES) -std=c++14 -O3 -DUSE_NEON -DRUN_ON_FPGA -DUSE_PNG -DAARCH32 -mcpu=cortex-a9 -mfpu=neon -mthumb -pthread -g -fopenmp -DFUNC_TIME_MEASUREMENT
 lm_fpga:          CXXFLAGS +=
 
+lm_arm64_fpga:    CXX = aarch64-linux-gnu-g++
+lm_arm64_fpga:    FLAGS += $(INCLUDES) -std=c++14 -O3 -DUSE_NEON -DRUN_ON_FPGA -DUSE_PNG -pthread -g -fopenmp
+lm_arm64_fpga:    CXXFLAGS +=
+
 lib_x86:           CXX = g++
 lib_x86:           FLAGS += $(INCLUDES) -O3 -std=c++14 -fPIC -fvisibility=hidden -pthread -g
 lib_x86:           CXXFLAGS +=
@@ -155,6 +173,10 @@ lib_arm:           CXXFLAGS +=
 lib_fpga:          CXX = arm-linux-gnueabihf-g++
 lib_fpga:          FLAGS += $(INCLUDES) -O3 -std=c++14 -fPIC -DUSE_NEON -DRUN_ON_FPGA -DAARCH32 -mcpu=cortex-a9 -mfpu=neon -mthumb -fvisibility=hidden -pthread -g -fopenmp
 lib_fpga:          CXXFLAGS +=
+
+lib_arm64_fpga:    CXX = aarch64-linux-gnu-g++
+lib_arm64_fpga:    FLAGS += $(INCLUDES) -O3 -std=c++14 -fPIC -DRUN_ON_FPGA -fvisibility=hidden -DUSE_NEON -pthread -g
+lib_arm64_fpga:    CXXFLAGS +=
 
 ar_x86:           AR = ar
 ar_x86:           CXX = g++
@@ -186,12 +208,21 @@ ar_fpga:          FLAGS += $(INCLUDES) -O3 -std=c++14 -fPIC -DUSE_NEON -DRUN_ON_
 ar_fpga:          LDFLAGS += -rcs
 ar_fpga:          NAME = fpga
 
+ar_arm64_fpga:    AR = aarch64-linux-gnu-ar
+ar_arm64_fpga:    CXX = aarch64-linux-gnu-g++
+ar_arm64_fpga:    FLAGS += $(INCLUDES) -O3 -std=c++14 -fPIC -DRUN_ON_FPGA -fvisibility=hidden -DUSE_NEON -pthread -g
+ar_arm64_fpga:    LDFLAGS += -rcs
+ar_arm64_fpga:    NAME = arm64_fpga
+
 
 $(TARGETS_ARM): $(OBJ) $(LIB_ARM_OBJ)
 	$(CXX) $(FLAGS) $(OBJ) $(LIB_ARM_OBJ) -o $@.elf $(CXXFLAGS) -pthread -ldl
 
 $(TARGETS_FPGA): $(OBJ) $(LIB_FPGA_OBJ)
 	$(CXX) $(FLAGS) $(OBJ) $(LIB_FPGA_OBJ) -o $@.elf $(CXXFLAGS) -pthread -ldl
+
+$(TARGETS_ARM64_FPGA): $(OBJ) $(LIB_ARM64_FPGA_OBJ)
+	$(CXX) $(FLAGS) $(OBJ) $(LIB_ARM64_FPGA_OBJ) -o $@.elf $(CXXFLAGS) -pthread -ldl
 
 $(TARGETS_AARCH64): $(OBJ) $(LIB_AARCH64_OBJ)
 	$(CXX) $(FLAGS) $(OBJ) $(LIB_AARCH64_OBJ) -o $@.elf $(CXXFLAGS) -pthread -ldl
@@ -217,6 +248,9 @@ $(LIBS_ARM): $(LIB_OBJ) $(LIB_ARM_OBJ)
 $(LIBS_FPGA): $(LIB_OBJ) $(LIB_FPGA_OBJ)
 	$(CXX) $(FLAGS) $(LIB_OBJ) $(LIB_FPGA_OBJ) -o $@.so $(CXXFLAGS) -shared -pthread -ldl
 
+$(LIBS_ARM64_FPGA): $(LIB_OBJ) $(LIB_ARM64_FPGA_OBJ)
+	$(CXX) $(FLAGS) $(LIB_OBJ) $(LIB_ARM64_FPGA_OBJ) -o $@.so $(CXXFLAGS) -shared -pthread -ldl
+
 $(ARS_X86): $(LIB_OBJ) $(LIB_X86_OBJ)
 	$(AR) $(LDFLAGS) libdlk_$(NAME).a $(LIB_OBJ) $(LIB_X86_OBJ)
 
@@ -231,6 +265,9 @@ $(ARS_ARM): $(LIB_OBJ) $(LIB_ARM_OBJ)
 
 $(ARS_FPGA): $(LIB_OBJ) $(LIB_FPGA_OBJ)
 	$(AR) $(LDFLAGS) libdlk_$(NAME).a $(LIB_OBJ) $(LIB_FPGA_OBJ)
+
+$(ARS_ARM64_FPGA): $(LIB_OBJ) $(LIB_ARM64_FPGA_OBJ)
+	$(AR) $(LDFLAGS) libdlk_$(NAME).a $(LIB_OBJ) $(LIB_ARM64_FPGA_OBJ)
 
 %.o: %.S
 	$(CXX) $(FLAGS) -c $^ -o $@ $(CXXFLAGS)

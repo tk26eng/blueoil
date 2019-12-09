@@ -23,7 +23,6 @@ limitations under the License.
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <map>
 #include <vector>
@@ -59,8 +58,7 @@ public:
     }
 
     std::string str_buf;
-    str_buf << in_file;
-    if(!in_file)
+    if(!(in_file >> str_buf))
     {
       std::cout << "Error: Reading file was failed in get_attribute() of UIO_Buffer" << std::endl;
       return std::string(""); 
@@ -73,33 +71,32 @@ public:
   bool UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)  
     :
     mm_buffer(nullptr),
-    mapped_size_in_bytes(0) 
+    mapped_size_in_bytes(size_in_bytes) 
 {
-    mapped_size_in_bytes = size_in_bytes
-
     if(mm_buffer != nullptr)
     {
       std::cout << "Error: UIO_Buffer " << device_name << " already initalized" << std::endl;
-      //return false;
+      throw std::system_error(errno, std::generic_category());
     }
 
     const std::string device_file = "/dev/" + device_name;
 
     // open device and map the memory
 
-    int dev_fd = open(device_file.c_str(), O_RDWR);
+    int dev_fd = open(device_file.c_str(), O_RDWR | O_SYNC);
     if(dev_fd < 0)
     {
       std::cout << strerror(errno) << std::endl;
+      throw std::system_error(errno, std::generic_category());
     }
 
     std::string str_phys_adr = get_attribute("/sys/class/uio/"+device_name+"/maps/map0/addr")
     if(str_phys_adr == "")
     {
-      std::cout << sterror(errno) << std::endl;
+      std::cout << strerror(errno) << std::endl;
+      throw std::system_error(errno, std::generic_category()); 
     }
-
-    unsigned long physical_address << isstringstream(str_phys_adr)
+    unsigned long physical_address = std::stoull(str_phys_adr, nullptr, 16);
 
     mm_buffer = mmap(
       nullptr,
@@ -107,18 +104,18 @@ public:
       PROT_READ | PROT_WRITE,
       MAP_SHARED,
       dev_fd,
-      physical_address
+      physical_address // This parameter should be zero when udmabuf driver is used
     );
 
     close(dev_fd);
     if(mm_buffer == MAP_FAILED)
     {
       std::cout << "Error: " << strerror(errno) << std::endl;
+      throw std::system_error(errno, std::generic_category());
     }
 
     memset((void *) mm_buffer, 0, mapped_size_in_bytes);
 
-    return true;
   }
 
   volatile void* buffer()
