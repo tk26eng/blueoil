@@ -90,7 +90,7 @@ UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)
       std::cout << strerror(errno) << std::endl;
       throw std::system_error(errno, std::generic_category()); 
     }
-    unsigned long physical_address = std::stoull(str_phys_adr, nullptr, 16);
+    // unsigned long physical_address = std::stoull(str_phys_adr, nullptr, 16);
 
     mm_buffer = mmap(
       nullptr,
@@ -98,7 +98,7 @@ UIO_Buffer(const std::string &device_name, uint32_t size_in_bytes)
       PROT_READ | PROT_WRITE,
       MAP_SHARED,
       dev_fd,
-      physical_address // This parameter should be zero when udmabuf driver is used
+      0
     );
 
     close(dev_fd);
