@@ -263,8 +263,8 @@ bool Network::init()
 #else
   device_input_buf = new QUANTIZED_PACKED[max_device_input_elems]();
   device_output_buf = new BIN_CONV_OUTPUT[max_device_output_elems]();
-  device_kernel_buf = new uint8_t[total_kernel_size/sizeof(uint8_t)];
-  device_thresholds_buf = new uint8_t[total_thresholds_size/sizeof(uint8_t)];
+  //device_kernel_buf = new uint8_t[total_kernel_size/sizeof(uint8_t)];
+  //device_thresholds_buf = new uint8_t[total_thresholds_size/sizeof(uint8_t)];
 #endif
 
   {% for node in graph.non_variables -%}
